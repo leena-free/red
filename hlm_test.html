@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>红楼梦人物性格测试</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f0eb;color:#3a2a1a;min-height:100vh}
+  .container{max-width:680px;margin:0 auto;padding:20px}
+  h1{text-align:center;color:#8b1a1a;margin-bottom:8px;font-size:1.8em}
+  .subtitle{text-align:center;color:#888;margin-bottom:24px;font-size:.9em}
+
+  /* 页面隐藏/显示 */
+  .page{display:none}
+  .page.active{display:block}
+
+  /* 顶部进度 */
+  .progress-bar{height:6px;background:#e0d5c5;border-radius:3px;margin-bottom:20px;overflow:hidden}
+  .progress-fill{height:100%;background:#8b1a1a;border-radius:3px;transition:width .4s ease;width:0%}
+
+  /* 人物卡片（学习页） */
+  .char-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+  .char-card{background:#fff;border-radius:10px;padding:14px;border-left:4px solid #8b1a1a;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .char-name{font-size:1.1em;font-weight:700;color:#8b1a1a;margin-bottom:4px}
+  .char-trait{font-size:.85em;color:#555;line-height:1.5}
+  .char-quote{font-size:.8em;color:#999;font-style:italic;margin-top:4px;border-top:1px dashed #eee;padding-top:4px}
+
+  /* 答题页 */
+  .question-card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 3px 12px rgba(0,0,0,.1)}
+  .q-num{font-size:.85em;color:#8b1a1a;font-weight:700;margin-bottom:10px}
+  .q-text{font-size:1.05em;color:#333;line-height:1.6;margin-bottom:20px}
+  .q-options{list-style:none}
+  .q-options li{margin-bottom:10px}
+  .q-options label{display:flex;align-items:center;padding:12px 16px;background:#faf7f4;border-radius:8px;border:2px solid transparent;cursor:pointer;transition:all .2s;font-size:.95em;line-height:1.5}
+  .q-options label:hover{border-color:#8b1a1a;background:#fdf0ee}
+  .q-options input[type=radio]{margin-right:10px;accent-color:#8b1a1a;width:16px;height:16px;flex-shrink:0}
+  .q-options li.selected label{background:#8b1a1a;color:#fff;border-color:#8b1a1a}
+
+  /* 答题结果 */
+  .result-card{background:#fff;border-radius:12px;padding:28px;text-align:center;box-shadow:0 3px 12px rgba(0,0,0,.1)}
+  .result-rank{font-size:4em;margin-bottom:8px}
+  .result-name{font-size:1.6em;color:#8b1a1a;font-weight:700;margin-bottom:4px}
+  .result-sub{font-size:.9em;color:#888;margin-bottom:20px}
+  .result-desc{text-align:left;background:#faf7f4;border-radius:8px;padding:16px;font-size:.9em;line-height:1.7;color:#555;margin-bottom:20px}
+  .result-traits{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:20px}
+  .trait-tag{background:#8b1a1a;color:#fff;padding:4px 12px;border-radius:20px;font-size:.8em}
+  .result-score{font-size:.85em;color:#aaa;margin-top:16px}
+
+  /* 按钮 */
+  .btn{display:block;width:100%;padding:14px;border:none;border-radius:8px;font-size:1em;cursor:pointer;transition:all .2s;margin-top:16px;font-weight:600}
+  .btn-primary{background:#8b1a1a;color:#fff}
+  .btn-primary:hover{background:#a02020}
+  .btn-primary:disabled{background:#ccc;cursor:not-allowed}
+  .btn-secondary{background:#f0e8e0;color:#8b1a1a}
+  .btn-secondary:hover{background:#e0d5c5}
+
+  /* 导航栏 */
+  .tab-bar{display:flex;gap:4px;margin-bottom:16px}
+  .tab-btn{flex:1;padding:8px;border:2px solid #8b1a1a;border-radius:8px;background:#fff;color:#8b1a1a;font-size:.85em;cursor:pointer;transition:all .2s;font-weight:600}
+  .tab-btn.active{background:#8b1a1a;color:#fff}
+
+  /* 答题结果列表 */
+  .result-summary{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .result-summary h3{font-size:.95em;color:#8b1a1a;margin-bottom:10px}
+  .result-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #eee;font-size:.85em}
+  .result-row .q-num{color:#555}
+  .result-row .your-ans{color:#333}
+  .result-row.correct .your-ans{color:#2a7a2a}
+  .result-row.wrong .your-ans{color:#c0392b}
+
+  /* 学习页说明 */
+  .study-intro{background:#8b1a1a;color:#fff;border-radius:10px;padding:16px;margin-bottom:16px;font-size:.9em;line-height:1.7}
+
+  /* 红楼梦装饰 */
+  .hlm-deco{text-align:center;font-size:.8em;color:#ccc;margin:12px 0}
+  .hlm-deco::before,.hlm-deco::after{content:"◆ "}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hlm-deco">红楼梦人物性格测试 · 共20题</div>
+
+  <!-- ===== 页面1：说明 ===== -->
+  <div id="page-intro" class="page active">
+    <h1>🎋 红楼梦人物性格测试</h1>
+    <p class="subtitle">测测你是《红楼梦》中的哪位人物？</p>
+    <div class="study-intro">
+      本测试分为两步：<br>
+      <strong>① 学习</strong> — 快速了解12位主要人物特点<br>
+      <strong>② 测试</strong> — 20道选择题，测出你的红楼梦人物性格
+    </div>
+    <button class="btn btn-primary" onclick="showPage('study')">开始学习 →</button>
+  </div>
+
+  <!-- ===== 页面2：学习 ===== -->
+  <div id="page-study" class="page">
+    <h1>📖 人物性格速览</h1>
+    <p class="subtitle">先了解这些人物，再答题更准哦</p>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showCharTab('main',this)">核心人物</button>
+      <button class="tab-btn" onclick="showCharTab('dist',this)">配角人物</button>
+    </div>
+    <div id="chars-main" class="char-grid">
+      <div class="char-card">
+        <div class="char-name">贾宝玉</div>
+        <div class="char-trait">叛逆多情、厌恶仕途、追求自由、尊重女性、天性纯真</div>
+        <div class="char-quote">"女儿是水做的骨肉"</div>
+      </div>
+      <div class="char-card">
+        <div class="char-name">林黛玉</div>
+        <div class="char-trait">才情卓越、多愁善感、敏感多疑、清高孤傲、体弱多病</div>
+        <div class="char-quote">"质本洁来还洁去"</div>
+      </div>
+      <div class="char-card">
+        <div class="char-name">薛宝钗</div>
+        <div class="char-trait">温柔贤淑、稳重圆滑、博学多才、处事周全、善解人意</div>
+        <div class="char-quote">"淡极始知花更艳"</div>
+      </div>
+      <div class="char-card">
+        <div class="char-name">王熙凤</div>
+        <div class="char-trait">精明强干、泼辣狠毒、善妒权谋、八面玲珑、雷厉风行</div>
+        <div class="char-quote">"机关算尽太聪明"</div>
+      </div>
+      <div class="char-card">
+        <div class="char-name">史湘云</div>
+        <div class="char-trait">天真烂漫、爽朗直率、不拘小节、才思敏捷、乐观旷达</div>
+        <div class="char-quote">"是真名士自风流"</div>
+      </div>
+      <div class="char-card">
+        <div class="char-name">贾探春</div>
+        <div class="char-trait">精明果断、有胆有识、志向高远、自尊心强、改革创新</div>
+        <div class="char-quote">"我但凡是个男人"</div>
+      </div>
+    </div>
+    <div id="chars-dist" class="char-grid" style="display:none">
+      <div class="char-card">
+        <div class="char-name">妙玉</div>
+        <div class="char-trait">清高孤僻、才华横溢、洁癖自许、不合世俗、内心孤寂</div>
+        <div class="char-quote">"欲洁何曾洁，云空未必空"</div>
+      </div>
+      <div class="char-card">
+        <div class="char-name">迎春</div>
+        <div class="char-trait">懦弱怕事、温和善良、逆来顺受、缺乏主见、与世无争</div>
+        <div class="char-quote">"金闺花柳质，一载赴黄粱"</div>
+      </div>
+      <div class="char-card">
+        <div class="char-name">惜春</div>
+        <div class="char-trait">孤僻冷漠、看破红尘、心冷嘴冷、追求清净、决绝果断</div>
+        <div class="char-quote">"勘破三春景不长"</div>
+      </div>
+      <div class="char-card">
+        <div class="char-name">晴雯</div>
+        <div class="char-trait">率真泼辣、爱憎分明、性格刚烈、心灵手巧、不畏强权</div>
+        <div class="char-quote">"心比天高，命比纸薄"</div>
+      </div>
+      <div class="char-card">
+        <div class="char-name">袭人</div>
+        <div class="char-trait">温柔体贴、忠心事主、贤惠忍让、柔中带刚、稳重周全</div>
+        <div class="char-quote">"枉自温柔和顺"</div>
+      </div>
+      <div class="char-card">
+        <div class="char-name">刘姥姥</div>
+        <div class="char-trait">朴实善良、幽默机智、深谙世故、知恩图报、乐观豁达</div>
+        <div class="char-quote">"守多大的碗儿，吃多大的饭"</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="showPage('quiz')">开始答题 →</button>
+    <button class="btn btn-secondary" onclick="showPage('intro')">返回</button>
+  </div>
+
+  <!-- ===== 页面3：答题 ===== -->
+  <div id="page-quiz" class="page">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="question-card">
+      <div class="q-num" id="qNum">第 1 / 20 题</div>
+      <div class="q-text" id="qText"></div>
+      <ul class="q-options" id="qOptions"></ul>
+      <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>下一题 →</button>
+    </div>
+  </div>
+
+  <!-- ===== 页面4：结果 ===== -->
+  <div id="page-result" class="page">
+    <div class="result-card">
+      <div class="result-rank" id="resultRank">🏆</div>
+      <div class="result-name" id="resultName"></div>
+      <div class="result-sub" id="resultSub"></div>
+      <div class="result-traits" id="resultTraits"></div>
+      <div class="result-desc" id="resultDesc"></div>
+      <button class="btn btn-primary" onclick="showPage('intro')">重新测试</button>
+      <button class="btn btn-secondary" onclick="showSummary()">查看答题详情</button>
+    </div>
+  </div>
+
+  <!-- ===== 页面5：答题详情 ===== -->
+  <div id="page-summary" class="page">
+    <h1 style="font-size:1.3em;text-align:center;color:#8b1a1a;margin-bottom:16px">📝 答题详情</h1>
+    <div id="summaryList"></div>
+    <button class="btn btn-primary" onclick="showPage('intro')" style="margin-top:20px">重新测试</button>
+    <button class="btn btn-secondary" onclick="showPage('result')">返回结果</button>
+  </div>
+</div>
+
+<script>
+// ============ 数据 ============
+const questions = [
+  {
+    text:"你参加聚会时，通常扮演什么角色？",
+    options:["主动发起话题，带动全场气氛","安静聆听，默默观察每个人","协调各方，确保大家都能参与","照顾某个被冷落的客人"],
+    scores:[[2,3,1,0],[2,3,1,0],[2,3,1,0],[2,3,1,0]]
+  },
+  {
+    text:"朋友向你倾诉烦恼，你的反应是？",
+    options:["陪他哭，陪他笑，给他最深的共情","冷静分析问题，提出实际解决方案","安慰几句，然后转移话题聊点轻松的","默默陪在身边，用行动表达支持"],
+    scores:[[3,1,0,2],[3,1,0,2],[3,1,0,2],[3,1,0,2]]
+  },
+  {
+    text:"在团队合作中，你最在意什么？",
+    options:["每个人都能发挥所长，目标感强","氛围和谐，没有人被忽视","任务高效完成，结果导向","所有人的情绪都被照顾到"],
+    scores:[[1,0,3,2],[1,0,3,2],[1,0,3,2],[1,0,3,2]]
+  },
+  {
+    text:"面对一项棘手的任务，你会？",
+    options:["迎难而上，相信自己一定能解决","先全面了解情况，再谨慎行动","寻求帮助，整合各方资源","放弃，另辟蹊径"],
+    scores:[[0,2,3,1],[0,2,3,1],[0,2,3,1],[0,2,3,1]]
+  },
+  {
+    text:"你更喜欢什么样的生活方式？",
+    options:["自由随性，不被规则束缚","规律有序，一切尽在掌控","热闹欢乐，人多才开心","低调清净，远离喧嚣"],
+    scores:[[3,1,0,2],[3,1,0,2],[3,1,0,2],[3,1,0,2]]
+  },
+  {
+    text:"别人对你最常见的评价是？",
+    options:["有才华，但有点不合群","温柔体贴，大家都喜欢你","能力很强，有领导力","善解人意，但有点软弱"],
+    scores:[[3,2,1,0],[3,2,1,0],[3,2,1,0],[3,2,1,0]]
+  },
+  {
+    text:"你最容易为什么事情生气？",
+    options:["不公正的事，尤其是欺负弱者","被欺骗，感情上的背叛","计划被打乱，一切失去秩序","被冷落，没有人理解自己"],
+    scores:[[2,3,1,0],[2,3,1,0],[2,3,1,0],[2,3,1,0]]
+  },
+  {
+    text:"在选择礼物时，你更看重？",
+    options:["符合对方当下的心意和需求","精致体面，体现自己的心意","实用为主，对方用得上","用心程度，有没有专属感"],
+    scores:[[2,1,0,3],[2,1,0,3],[2,1,0,3],[2,1,0,3]]
+  },
+  {
+    text:"如果你的观点不被认同，你会？",
+    options:["坚持己见，用行动证明自己","不再争论，保留自己的看法","反思自己，也许对方有道理","委屈，但表面顺从"],
+    scores:[[3,2,1,0],[3,2,1,0],[3,2,1,0],[3,2,1,0]]
+  },
+  {
+    text:"你最欣赏什么样的人？",
+    options:["有独特个性，不随波逐流的人","才华横溢，内涵丰富的人","有能力，能成大事的人","真诚善良，性格温暖的人"],
+    scores:[[3,2,1,0],[3,2,1,0],[3,2,1,0],[3,2,1,0]]
+  },
+  {
+    text:"你在人群中第一次见面时会？",
+    options:["大方得体，自然地介绍自己","微笑点头，等别人先开口","主动观察，找出有趣的人","紧张，找一个角落待着"],
+    scores:[[2,1,3,0],[2,1,3,0],[2,1,3,0],[2,1,3,0]]
+  },
+  {
+    text:"当有人当众批评你时，你会？",
+    options:["当场反驳，维护自己的尊严","忍住情绪，事后找机会解释","委屈落泪，但不明说","冷静记下，反思是否有道理"],
+    scores:[[3,0,1,2],[3,0,1,2],[3,0,1,2],[3,0,1,2]]
+  },
+  {
+    text:"你更看重一段关系中的什么？",
+    options:["灵魂契合，三观一致","彼此照顾，互相依靠","能帮助自己成长","平淡温馨，细水长流"],
+    scores:[[3,2,1,0],[3,2,1,0],[3,2,1,0],[3,2,1,0]]
+  },
+  {
+    text:"面对一个全新领域的挑战，你的第一反应是？",
+    options:["兴奋好奇，想立刻探索","有点担忧，需要先学习","无所谓，当作平常事","焦虑，觉得自己不行"],
+    scores:[[3,2,1,0],[3,2,1,0],[3,2,1,0],[3,2,1,0]]
+  },
+  {
+    text:"你内心最深的恐惧是什么？",
+    options:["失去自由，被束缚住","被误解，没有人真正懂你","平庸一生，没有价值","失去所爱之人"],
+    scores:[[3,2,1,0],[3,2,1,0],[3,2,1,0],[3,2,1,0]]
+  },
+  {
+    text:"在争吵中，你通常是？",
+    options:["嘴硬心软，吵完更难受","据理力争，绝不退让","沉默回避，避免冲突","借机发泄，把心里话说出来"],
+    scores:[[2,3,0,1],[2,3,0,1],[2,3,0,1],[2,3,0,1]]
+  },
+  {
+    text:"你更愿意为什么付出大量时间？",
+    options:["自己热爱的事物，不计回报","家人和最在乎的人","事业成功和社会地位","帮助他人和社会"],
+    scores:[[3,2,1,0],[3,2,1,0],[3,2,1,0],[3,2,1,0]]
+  },
+  {
+    text:"你欣赏以下哪种人生态度？",
+    options:["保持本心，不为外界所动","积极入世，有所作为","活在当下，及时行乐","淡泊名利，修身养性"],
+    scores:[[3,2,1,0],[3,2,1,0],[3,2,1,0],[3,2,1,0]]
+  },
+  {
+    text:"当你做了好事却被人误解时，你会？",
+    options:["无所谓，时间会证明一切","解释清楚，不能背黑锅","反思自己，是不是方法有问题","忍下这口气，不与之计较"],
+    scores:[[2,3,1,0],[2,3,1,0],[2,3,1,0],[2,3,1,0]]
+  },
+  {
+    text:"用一个词形容你自己，你会选？",
+    options:["叛逆","温柔","能干","敏感"],
+    scores:[[3,1,2,0],[3,1,2,0],[3,1,2,0],[3,1,2,0]]
+  }
+];
+
+// 人物定义（index 0-5：宝玉、黛玉、宝钗、熙凤、湘云、探春）
+const characters = [
+  {
+    name:"贾宝玉", emoji:"🌿",
+    traits:["叛逆","多情","纯真","追求自由"],
+    desc:"你是贾宝玉！\n\n你天生叛逆，厌恶世俗的功名利禄，追求心灵的自由与真情。你尊重每一个生命，尤其是女性，心中有纯粹的爱与悲悯。你的世界里有诗、有情、有梦，不愿被现实的条条框框束缚。",
+    quote:"\"女儿是水做的骨肉\""
+  },
+  {
+    name:"林黛玉", emoji:"🌸",
+    traits:["才情","敏感","多愁善感","清高"],
+    desc:"你是林黛玉！\n\n你才情横溢，诗词歌赋信手拈来，情感细腻得如同一根琴弦，一触即发。你清高孤傲，不愿与世俗同流合污，内心敏感而脆弱，却有着最真挚的灵魂。",
+    quote:"\"质本洁来还洁去\""
+  },
+  {
+    name:"薛宝钗", emoji:"🌺",
+    traits:["贤淑","圆滑","博学","周全"],
+    desc:"你是薛宝钗！\n\n你温柔贤淑、端庄稳重，是众人眼中完美的大家闺秀。你博学多才、处事周全，能在复杂的人际关系中游刃有余。你善解人意，懂得照顾他人的感受，是最有温度的存在。",
+    quote:"\"淡极始知花更艳\""
+  },
+  {
+    name:"王熙凤", emoji:"🔥",
+    traits:["精明","能干","泼辣","果断"],
+    desc:"你是王熙凤！\n\n你精明强干，巾帼不让须眉，是贾府真正的管家人。你雷厉风行，说一不二，在复杂的家族关系中掌舵前行。你有能力、有魄力，是天生领导者，但也因此背负着巨大压力。",
+    quote:"\"机关算尽太聪明\""
+  },
+  {
+    name:"史湘云", emoji:"🌟",
+    traits:["爽朗","直率","乐观","旷达"],
+    desc:"你是史湘云！\n\n你天真烂漫、爽朗直率，是红楼梦里最明亮的那道光。你不拘小节、乐观旷达，醉卧芍药圃的你是全书最动人的画面。你的乐观感染着身边的每一个人。",
+    quote:"\"是真名士自风流\""
+  },
+  {
+    name:"贾探春", emoji:"⚡",
+    traits:["果断","有识","自尊","改革"],
+    desc:"你是贾探春！\n\n你精明果断，有胆有识，是贾府中最具改革精神的女子。你志向高远，不甘于平庸，抄检大观园时那一巴掌至今让人印象深刻。你自尊自重，是女子中少有的领袖之才。",
+    quote:"\"我但凡是个男人\""
+  }
+];
+
+// ============ 状态 ============
+let currentQ = 0;
+let answers = []; // {selected, scores}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(id==='quiz') renderQuestion();
+  if(id==='result') showResult();
+  if(id==='summary') showDetail();
+}
+
+function showCharTab(tab,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('chars-main').style.display = tab==='main'?'grid':'none';
+  document.getElementById('chars-dist').style.display = tab==='dist'?'grid':'none';
+}
+
+function renderQuestion(){
+  const q = questions[currentQ];
+  document.getElementById('qNum').textContent = `第 ${currentQ+1} / 20 题`;
+  document.getElementById('qText').textContent = q.text;
+  document.getElementById('progressFill').style.width = ((currentQ)/20*100)+'%';
+
+  const ul = document.getElementById('qOptions');
+  ul.innerHTML = '';
+  q.options.forEach((opt,i)=>{
+    const li = document.createElement('li');
+    li.id = 'opt-'+i;
+    li.innerHTML = `<label><input type="radio" name="q" value="${i}" onchange="selectOption(${i})"> ${opt}</label>`;
+    ul.appendChild(li);
+  });
+  document.getElementById('nextBtn').disabled = true;
+  document.getElementById('nextBtn').textContent = currentQ===19?'查看结果':'下一题 →';
+}
+
+function selectOption(i){
+  document.querySelectorAll('#qOptions li').forEach((li,idx)=>{
+    li.classList.toggle('selected',idx===i);
+  });
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion(){
+  const sel = document.querySelector('input[name=q]:checked');
+  if(!sel) return;
+  const val = parseInt(sel.value);
+  const q = questions[currentQ];
+  answers.push({selected:val, scores:q.scores[val]});
+
+  if(currentQ<19){
+    currentQ++;
+    renderQuestion();
+  } else {
+    showPage('result');
+  }
+}
+
+function showResult(){
+  // 计算各人物得分
+  const charScores = [0,0,0,0,0,0];
+  answers.forEach(a=>{
+    a.scores.forEach((s,i)=>charScores[i]+=s);
+  });
+
+  // 找最高分
+  let maxScore = -1, topIdx = 0;
+  charScores.forEach((s,i)=>{
+    if(s>maxScore){maxScore=s;i>(topIdx=topIdx) && (topIdx=i);}
+  });
+  // 正确找出topIdx
+  charScores.forEach((s,i)=>{if(s>maxScore){maxScore=s;topIdx=i;}});
+
+  // 排序用于显示
+  const sorted = charScores.map((s,i)=>({s,i})).sort((a,b)=>b.s-a.s);
+  topIdx = sorted[0].i;
+  maxScore = sorted[0].s;
+
+  const char = characters[topIdx];
+  document.getElementById('resultRank').textContent = char.emoji;
+  document.getElementById('resultName').textContent = char.name;
+  document.getElementById('resultSub').textContent = `综合得分：${maxScore} / ${answers.length*3} 分`;
+  document.getElementById('resultTraits').innerHTML = char.traits.map(t=>`<span class="trait-tag">${t}</span>`).join('');
+  document.getElementById('resultDesc').innerHTML = char.desc.replace(/\n/g,'<br>');
+
+  // 显示各人物得分
+  let scoreList = '<div style="margin-top:16px;padding:12px;background:#faf7f4;border-radius:8px;font-size:.85em;color:#888">';
+  sorted.forEach(item=>{
+    const c = characters[item.i];
+    scoreList += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #e0d5c5">
+      <span>${c.emoji} ${c.name}</span>
+      <span style="color:${item.i===topIdx?'#8b1a1a':'#888'};font-weight:${item.i===topIdx?'700':'400'}">${item.s}分</span>
+    </div>`;
+  });
+  scoreList += '</div>';
+  document.getElementById('resultDesc').innerHTML += scoreList;
+}
+
+function showSummary(){
+  showPage('summary');
+  const list = document.getElementById('summaryList');
+  list.innerHTML = '';
+  answers.forEach((a,i)=>{
+    const q = questions[i];
+    const correct = q.options[a.selected];
+    list.innerHTML += `<div class="result-summary">
+      <h3>第${i+1}题：${q.text}</h3>
+      <div class="result-row">
+        <span class="q-num">你的选择</span>
+        <span class="your-ans">${correct}</span>
+      </div>
+    </div>`;
+  });
+}
+
+// 初始化
+showPage('intro');
+</script>
+</body>
+</html>
